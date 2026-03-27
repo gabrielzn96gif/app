@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>StudyTrack FINAL</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+* { box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  background: linear-gradient(135deg, #0f172a 0%, #1a1f35 100%);
+  color: #fff;
+  min-height: 100vh;
+}
+header {
+  background: linear-gradient(90deg, #1e293b 0%, #334155 100%);
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+header h1 {
+  margin: 0;
+  font-size: 2em;
+  color: #60a5fa;
+}
+nav {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+}
+nav button {
+  margin: 5px;
+  padding: 10px 20px;
+  border: 2px solid #60a5fa;
+  background: transparent;
+  color: #60a5fa;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+nav button:hover {
+  background: #60a5fa;
+  color: #0f172a;
+}
+section {
+  display: none;
+  padding: 30px;
+  max-width: 1000px;
+  margin: 20px auto;
+}
+.active {
+  display: block;
+}
+input, select, button {
+  padding: 10px 15px;
+  margin: 8px;
+  border-radius: 6px;
+  border: none;
+  font-size: 1em;
+  cursor: pointer;
+}
+input, select {
+  background: #1e293b;
+  color: #fff;
+  border: 1px solid #334155;
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: #60a5fa;
+  background: #0f172a;
+}
+button {
+  background: #3b82f6;
+  color: white;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+button:hover {
+  background: #60a5fa;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(96, 165, 250, 0.4);
+}
+button:active {
+  transform: translateY(0);
+}
+.card {
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 12px;
+  margin: 15px 0;
+  border-left: 4px solid #3b82f6;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+.badge {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: black;
+  padding: 8px 15px;
+  border-radius: 20px;
+  margin: 5px;
+  display: inline-block;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+ul {
+  list-style: none;
+  padding: 0;
+}
+li {
+  background: #1e293b;
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 6px;
+  border-left: 3px solid #10b981;
+}
+h2 {
+  color: #60a5fa;
+  border-bottom: 2px solid #3b82f6;
+  padding-bottom: 10px;
+}
+.stat-box {
+  background: #1e293b;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.stat-value {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #60a5fa;
+}
+#grafico {
+  margin: 20px 0;
+}
+</style>
+</head>
+<body>
+
+<header>
+<h1>🔥 StudyTrack FINAL</h1>
+<nav>
+<button onclick="mostrar('dashboard')">Dashboard</button>
+<button onclick="mostrar('notas')">Notas</button>
+<button onclick="mostrar('simulador')">Simulador</button>
+<button onclick="mostrar('stats')">Stats</button>
+<button onclick="mostrar('gamificacao')">Gamificação</button>
+</nav>
+</header>
+
+<section id="dashboard" class="active">
+<h2>📊 Painel de Controle</h2>
+<div class="card">
+  <p><strong>Média Geral:</strong> <span id="mediaGeral" class="stat-value">-</span></p>
+  <p id="previsaoStatus"></p>
+  <p><strong>🔥 Streak Atual:</strong> <span id="streakAtual" class="stat-value">0</span> dias</p>
+</div>
+<canvas id="grafico" style="max-height: 400px;"></canvas>
+</section>
+
+<section id="notas">
+<h2>📝 Minhas Notas</h2>
+<div class="card">
+  <h3>Adicionar Nova Nota</h3>
+  <select id="matNota">
+    <option value="">Selecione a matéria...</option>
+    <option value="Matemática">Matemática</option>
+    <option value="Química">Química</option>
+    <option value="Física">Física</option>
+    <option value="Português">Português</option>
+    <option value="História">História</option>
+  </select>
+  <input id="nota" type="number" placeholder="Digite a nota (0-10)" min="0" max="10" step="0.5">
+  <button onclick="addNota()">➕ Salvar Nota</button>
+</div>
+<h3>Histórico de Notas</h3>
+<div id="listaNotas" style="max-height: 400px; overflow-y: auto;"></div>
+<button onclick="limparNotas()" style="background: #ef4444; margin-top: 10px;">🗑️ Limpar Todas</button>
+</section>
+
+<section id="simulador">
+<h2>🎯 Simulador Inteligente</h2>
+<div class="card">
+  <h3>Escolha a Matéria</h3>
+  <select id="materia">
+    <option value="">Selecione...</option>
+    <option value="mat">🔢 Matemática</option>
+    <option value="qui">🧪 Química</option>
+    <option value="fis">⚡ Física</option>
+  </select>
+  <button onclick="novaQuestao()">🎲 Gerar Questão</button>
+</div>
+<div class="card">
+  <h3>Questão</h3>
+  <p id="pergunta" style="font-size: 1.2em; font-weight: bold;">Selecione uma matéria e clique em Gerar</p>
+  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <input id="resposta" type="text" placeholder="Digite sua resposta" style="flex: 1; min-width: 200px;">
+    <button onclick="verificar()">✓ Responder</button>
+  </div>
+  <p id="resultado" style="font-size: 1.5em; font-weight: bold; margin-top: 10px;"></p>
+  <p id="explicacao" style="background: #0f172a; padding: 10px; border-radius: 6px; margin-top: 10px;"></p>
+</div>
+</section>
+
+<section id="stats">
+<h2>📈 Estatísticas</h2>
+<div class="stat-box">
+  <span>Taxa de Acerto Geral</span>
+  <span id="taxa" class="stat-value">-</span>
+</div>
+<div class="stat-box">
+  <span>Ponto Fraco</span>
+  <span id="fracoMat" class="stat-value">-</span>
+</div>
+<div class="stat-box">
+  <span>Questões Respondidas</span>
+  <span id="totalQuestoes" class="stat-value">0</span>
+</div>
+<h3>Desempenho por Matéria</h3>
+<div id="desempenhoDetail"></div>
+</section>
+
+<section id="gamificacao">
+<h2>🏆 Gamificação</h2>
+<div class="card">
+  <div style="display: flex; justify-content: space-around; text-align: center; flex-wrap: wrap;">
+    <div>
+      <p style="font-size: 2em; margin: 0;">⭐</p>
+      <p><strong>Nível</strong></p>
+      <p id="nivelUI" class="stat-value" style="font-size: 2em;">1</p>
+    </div>
+    <div>
+      <p style="font-size: 2em; margin: 0;">💫</p>
+      <p><strong>XP</strong></p>
+      <p id="xpUI" class="stat-value" style="font-size: 2em;">0</p>
+    </div>
+    <div>
+      <p style="font-size: 2em; margin: 0;">🔥</p>
+      <p><strong>Streak</strong></p>
+      <p id="streakUI" class="stat-value" style="font-size: 2em;">0</p>
+    </div>
+  </div>
+  <div style="width: 100%; background: #0f172a; height: 30px; border-radius: 15px; margin-top: 15px; overflow: hidden;">
+    <div id="xpBar" style="background: linear-gradient(90deg, #3b82f6, #60a5fa); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+  </div>
+  <p style="text-align: center; font-size: 0.9em; color: #94a3b8;">XP para próximo nível: <span id="xpNecessario">50</span></p>
+</div>
+<h3>🎖️ Conquistas Desbloqueadas</h3>
+<div id="conquistas" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+</section>
+
+<script>
+let dados = JSON.parse(localStorage.getItem('dados')) || {
+  notas: {},
+  desempenho: {},
+  xp: 0,
+  nivel: 1,
+  streak: 0,
+  last: 0,
+  conquistas: []
+};
+
+let grafico, questaoAtual, respostaAtual;
+
+// Navegar entre seções
+function mostrar(secao) {
+  document.querySelectorAll('section').forEach(x => x.classList.remove('active'));
+  document.getElementById(secao).classList.add('active');
+  setTimeout(updateUI, 100);
+}
+
+// Salvar dados
+function salvar() {
+  localStorage.setItem('dados', JSON.stringify(dados));
+  updateUI();
+}
+
+// ===== SEÇÃO NOTAS =====
+function addNota() {
+  let materia = document.getElementById('matNota').value;
+  let nota = parseFloat(document.getElementById('nota').value);
+  
+  if (!materia) {
+    alert('Selecione uma matéria!');
+    return;
+  }
+  if (isNaN(nota) || nota < 0 || nota > 10) {
+    alert('Digite uma nota válida (0-10)');
+    return;
+  }
+  
+  if (!dados.notas[materia]) dados.notas[materia] = [];
+  dados.notas[materia].push(nota);
+  
+  document.getElementById('nota').value = '';
+  document.getElementById('matNota').value = '';
+  salvar();
+}
+
+function limparNotas() {
+  if (confirm('Tem certeza que deseja limpar todas as notas?')) {
+    dados.notas = {};
+    salvar();
+  }
+}
+
+function calcularMedia() {
+  let total = 0, count = 0;
+  Object.values(dados.notas).forEach(arr => {
+    arr.forEach(nota => {
+      total += nota;
+      count++;
+    });
+  });
+  return count ? (total / count).toFixed(2) : 0;
+}
+
+function renderNotas() {
+  let container = document.getElementById('listaNotas');
+  container.innerHTML = '';
+  
+  if (Object.keys(dados.notas).length === 0) {
+    container.innerHTML = '<p style="color: #94a3b8;">Nenhuma nota registrada ainda...</p>';
+    return;
+  }
+  
+  Object.entries(dados.notas).forEach(([materia, notas]) => {
+    let media = (notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(2);
+    let div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <strong>${materia}</strong> - Média: <span class="stat-value">${media}</span>
+      <p style="margin: 10px 0; color: #94a3b8;">Notas: ${notas.join(', ')}</p>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// ===== SEÇÃO SIMULADOR =====
+const questoes = {
+  mat: [
+    { pergunta: 'x² - 5x + 6 = 0\nQual é o valor de x?', resposta: '2', explicacao: 'Resposta correta: x = 2 (também x = 3)\nUsando Bhaskara: x = (5 ± √(25-24)) / 2' },
+    { pergunta: 'Quanto é 15% de 200?', resposta: '30', explicacao: '15% de 200 = 0.15 × 200 = 30' },
+    { pergunta: 'Se 3x = 9, qual é x?', resposta: '3', explicacao: 'Dividindo ambos os lados por 3: x = 9/3 = 3' }
+  ],
+  qui: [
+    { pergunta: '44g de CO₂ = ? mol\n(Massa molar do CO₂ = 44 g/mol)', resposta: '1', explicacao: 'n = m/M = 44/44 = 1 mol' },
+    { pergunta: 'H₂O tem quantos átomos de hidrogênio?', resposta: '2', explicacao: 'A molécula H₂O possui 2 átomos de hidrogênio e 1 de oxigênio' },
+    { pergunta: 'Qual é o número atômico do Carbono?', resposta: '6', explicacao: 'O Carbono (C) possui número atômico 6' }
+  ],
+  fis: [
+    { pergunta: 'Um carro viaja a 10 m/s por 5 segundos.\nQual é a distância percorrida?', resposta: '50', explicacao: 'S = V × T = 10 × 5 = 50 metros' },
+    { pergunta: 'Qual é a aceleração em m/s² se a velocidade passa de 0 a 10 m/s em 2 seg?', resposta: '5', explicacao: 'a = ΔV/ΔT = 10/2 = 5 m/s²' },
+    { pergunta: 'Qual é o peso em newtons de uma massa de 10kg? (g = 10)', resposta: '100', explicacao: 'P = m × g = 10 × 10 = 100 N' }
+  ]
+};
+
+function novaQuestao() {
+  let materia = document.getElementById('materia').value;
+  
+  if (!materia) {
+    alert('Selecione uma matéria!');
+    return;
+  }
+  
+  let todasQuestoes = questoes[materia];
+  questaoAtual = todasQuestoes[Math.floor(Math.random() * todasQuestoes.length)];
+  
+  document.getElementById('pergunta').textContent = questaoAtual.pergunta;
+  document.getElementById('resposta').value = '';
+  document.getElementById('resultado').textContent = '';
+  document.getElementById('explicacao').textContent = '';
+}
+
+function verificar() {
+  if (!questaoAtual) {
+    alert('Gere uma questão primeiro!');
+    return;
+  }
+  
+  let resposta = document.getElementById('resposta').value.trim();
+  let materia = document.getElementById('materia').value;
+  
+  if (!resposta) {
+    alert('Digite uma resposta!');
+    return;
+  }
+  
+  if (!dados.desempenho[materia]) dados.desempenho[materia] = { a: 0, e: 0 };
+  
+  let correto = resposta.toLowerCase() === questaoAtual.resposta.toLowerCase();
+  
+  if (correto) {
+    document.getElementById('resultado').textContent = '✅ CORRETO!';
+    document.getElementById('resultado').style.color = '#10b981';
+    dados.desempenho[materia].a++;
+    ganharXP(10);
+  } else {
+    document.getElementById('resultado').textContent = '❌ INCORRETO!';
+    document.getElementById('resultado').style.color = '#ef4444';
+    dados.desempenho[materia].e++;
+    ganharXP(2);
+  }
+  
+  document.getElementById('explicacao').textContent = '📖 ' + questaoAtual.explicacao;
+  registrarStreak();
+  verificarConquistas();
+  salvar();
+}
+
+// ===== Sistema DE XP E GAMIFICAÇÃO =====
+function ganharXP(quantidade) {
+  dados.xp += quantidade;
+  let xpProximo = dados.nivel * 50;
+  
+  if (dados.xp >= xpProximo) {
+    dados.xp = 0;
+    dados.nivel++;
+    alert(`🎉 Parabéns! Você subiu para o nível ${dados.nivel}!`);
+  }
+}
+
+function registrarStreak() {
+  let hoje = new Date().toDateString();
+  if (dados.last !== hoje) {
+    dados.streak++;
+    dados.last = hoje;
+  }
+}
+
+function verificarConquistas() {
+  if (dados.streak >= 3 && !dados.conquistas.includes('🔥 3 Dias Seguidos')) {
+    dados.conquistas.push('🔥 3 Dias Seguidos');
+  }
+  if (dados.streak >= 7 && !dados.conquistas.includes('🌟 Semana Ativa')) {
+    dados.conquistas.push('🌟 Semana Ativa');
+  }
+  
+  let totalAcertos = Object.values(dados.desempenho).reduce((a, d) => a + d.a, 0);
+  if (totalAcertos >= 10 && !dados.conquistas.includes('🎯 10 Acertos')) {
+    dados.conquistas.push('🎯 10 Acertos');
+  }
+  if (totalAcertos >= 50 && !dados.conquistas.includes('🏆 50 Acertos')) {
+    dados.conquistas.push('🏆 50 Acertos');
+  }
+  
+  if (dados.nivel >= 5 && !dados.conquistas.includes('⭐ Nível 5')) {
+    dados.conquistas.push('⭐ Nível 5');
+  }
+}
+
+function renderConquistas() {
+  let container = document.getElementById('conquistas');
+  container.innerHTML = '';
+  
+  if (dados.conquistas.length === 0) {
+    container.innerHTML = '<p style="color: #94a3b8;">Complete desafios para desbloquear conquistas!</p>';
+    return;
+  }
+  
+  dados.conquistas.forEach(conquista => {
+    let badge = document.createElement('div');
+    badge.className = 'badge';
+    badge.textContent = conquista;
+    container.appendChild(badge);
+  });
+}
+
+// ===== ESTATÍSTICAS =====
+function calcularStats() {
+  let total = 0, acertos = 0, piorMateria = null, piorTaxa = 1;
+  
+  Object.entries(dados.desempenho).forEach(([materia, dados_mat]) => {
+    let t = dados_mat.a + dados_mat.e;
+    if (t > 0) {
+      let taxa = dados_mat.a / t;
+      if (taxa < piorTaxa) {
+        piorTaxa = taxa;
+        piorMateria = materia;
+      }
+    }
+    acertos += dados_mat.a;
+    total += t;
+  });
+  
+  let percentual = total ? ((acertos / total) * 100).toFixed(1) : 0;
+  
+  document.getElementById('taxa').textContent = percentual + '%';
+  document.getElementById('fracoMat').textContent = piorMateria ? piorMateria : '-';
+  document.getElementById('totalQuestoes').textContent = total;
+  
+  // Detalhes por matéria
+  let detail = document.getElementById('desempenhoDetail');
+  detail.innerHTML = '';
+  Object.entries(dados.desempenho).forEach(([mat, d]) => {
+    let t = d.a + d.e;
+    let taxa = t ? ((d.a / t) * 100).toFixed(1) : 0;
+    let div = document.createElement('div');
+    div.className = 'stat-box';
+    div.innerHTML = `<span>${mat}</span><span style="color: ${taxa >= 70 ? '#10b981' : taxa >= 50 ? '#f59e0b' : '#ef4444'};" class="stat-value">${taxa}%</span>`;
+    detail.appendChild(div);
+  });
+}
+
+// ===== GRÁFICO =====
+function renderGrafico() {
+  let materias = Object.keys(dados.notas);
+  let medias = materias.map(m => {
+    let notas = dados.notas[m];
+    return (notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(2);
+  });
+  
+  if (grafico) grafico.destroy();
+  
+  if (materias.length === 0) {
+    document.getElementById('grafico').style.display = 'none';
+    return;
+  }
+  
+  document.getElementById('grafico').style.display = 'block';
+  grafico = new Chart(document.getElementById('grafico'), {
+    type: 'bar',
+    data: {
+      labels: materias,
+      datasets: [{
+        label: 'Média por Matéria',
+        data: medias,
+        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+        borderColor: '#60a5fa',
+        borderWidth: 2,
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 10,
+          ticks: { color: '#94a3b8' },
+          grid: { color: '#334155' }
+        },
+        x: {
+          ticks: { color: '#94a3b8' },
+          grid: { color: '#334155' }
+        }
+      },
+      plugins: {
+        legend: {
+          labels: { color: '#94a3b8' }
+        }
+      }
+    }
+  });
+}
+
+function renderGamificacao() {
+  document.getElementById('nivelUI').textContent = dados.nivel;
+  document.getElementById('xpUI').textContent = dados.xp;
+  document.getElementById('streakUI').textContent = dados.streak;
+  
+  let xpProximo = dados.nivel * 50;
+  let percentual = (dados.xp / xpProximo) * 100;
+  document.getElementById('xpBar').style.width = percentual + '%';
+  document.getElementById('xpNecessario').textContent = (xpProximo - dados.xp);
+  
+  renderConquistas();
+}
+
+// ===== ATUALIZAR UI =====
+function updateUI() {
+  if (document.getElementById('dashboard').classList.contains('active')) {
+    document.getElementById('mediaGeral').textContent = calcularMedia();
+    let previsao = calcularMedia() >= 6 ? '✅ Você está no caminho certo!' : '⚠️ Estude mais para melhorar!';
+    document.getElementById('previsaoStatus').textContent = previsao;
+    document.getElementById('streakAtual').textContent = dados.streak;
+    renderGrafico();
+  }
+  
+  if (document.getElementById('notas').classList.contains('active')) {
+    renderNotas();
+  }
+  
+  if (document.getElementById('stats').classList.contains('active')) {
+    calcularStats();
+  }
+  
+  if (document.getElementById('gamificacao').classList.contains('active')) {
+    renderGamificacao();
+  }
+}
+
+// Inicializar
+updateUI();
+</script>
+
+</body>
+</html>
